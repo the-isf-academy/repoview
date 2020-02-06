@@ -1,0 +1,6 @@
+roster.csv
+projects.csv
+tasks/secrets.py
+*.swp
+__pycache__/*
+cached_student_project_repos.json
