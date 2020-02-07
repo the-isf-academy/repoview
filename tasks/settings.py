@@ -1,5 +1,6 @@
 try:
     from tasks.secrets import (
+        GITHUB_ORGANIZATION,
         GITHUB_ACCESS_TOKEN,
     )
 except ImportError:
