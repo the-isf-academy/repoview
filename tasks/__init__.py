@@ -32,7 +32,7 @@ def check(c):
         if hasattr(s, f):
             if not Path(getattr(s, f)).exists():
                 msg = "{} does not exist. It must have columns: {}."
-                errors.append(msg.format(s.ROSTER_FILE, ", ".join(cols)))
+                errors.append(msg.format(f, ", ".join(cols)))
             try:
                 df = pd.read_csv(getattr(s, f))
                 for col in cols:
