@@ -38,22 +38,23 @@ def parse_date(datestring):
             day = match.group('day') or 1
             return datetime(year=year, month=month, day=day)
 
-def get_student_repos(project_base_repo, user_logins, cached=False):
+def get_student_repos(project_base_repo, user_logins, assignment_prefix, cached=False):
     "For each user, returns a list of the projects"
     if cached and Path(s.STUDENT_PROJECT_REPO_CACHE).exists():
         g = authenticate()
         cache = json.loads(Path(s.STUDENT_PROJECT_REPO_CACHE).read_text())
-        items = cache[project_base_repo.name].items()
-        return {login: [g.get_repo(repo) for repo in repos] for login, repos in items}
+        if project_base_repo.name in cache:
+            items = cache[project_base_repo.name].items()
+            return {login: [g.get_repo(repo) for repo in repos] for login, repos in items}
     org = get_org()
     org_repos = org.get_repos()
     student_repos = defaultdict(list)
     num_org_repos = org.public_repos + org.total_private_repos
     for repo in tqdm(org.get_repos(), total=num_org_repos):
-        if is_github_classroom_child(project_base_repo, repo):
+        if is_github_classroom_child(project_base_repo, repo, assignment_prefix):
             for collaborator in repo.get_collaborators():
                 if collaborator.login in user_logins:
-                    #print("{} -> {}".format(collaborator.login, repo.name))
+                    print("{} -> {}".format(collaborator.login, repo.name))
                     student_repos[collaborator.login].append(repo)
 
     if Path(s.STUDENT_PROJECT_REPO_CACHE).exists():
@@ -64,7 +65,7 @@ def get_student_repos(project_base_repo, user_logins, cached=False):
         login: [r.full_name for r in repos] for login, repos in student_repos.items()
     }
     with open(s.STUDENT_PROJECT_REPO_CACHE, 'w') as cachefile:
-        json.dump(cache, cachefile) 
+        json.dump(cache, cachefile)
     return student_repos
 
 def get_org():
@@ -87,10 +88,10 @@ def choose_from_options(options, prompt=None, reprompt=None):
         print(reprompt or default_reprompt)
         choice = input("> ")
     return int(choice)
-    
+
 def get_project_repo(identifier):
     """
-    Flexibly gets a project repo; identifier may be an index or a string 
+    Flexibly gets a project repo; identifier may be an index or a string
     matching part of a project name or repo name (as specified in projects.csv)
     """
     g = authenticate()
@@ -119,11 +120,13 @@ def get_project_repo(identifier):
                 raise NotFoundError("No matching projects.")
     return g.get_repo(repo_name)
 
-def is_github_classroom_child(parent, child):
+def is_github_classroom_child(parent, child, assignment_prefix):
     """
-    Repos created through GitHub classroom are not forked from the parent repo, 
+    Repos created through GitHub classroom are not forked from the parent repo,
     so we can't use repos' native parent/child relations. Instead, we rely on the
     (possibly-unstable) strategy of comparing repo names.
     """
-    return child.name.startswith(parent.name)
-
+    if assignment_prefix:
+        return child.name.startswith(assignment_prefix)
+    else:
+        return child.name.startswith(parent.name)

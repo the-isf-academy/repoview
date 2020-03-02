@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from tasks.helpers import (
-    authenticate, 
+    authenticate,
     parse_date,
     get_student_repos,
     get_org,
@@ -15,7 +15,7 @@ from tasks.helpers import (
 )
 import tasks.settings as s
 
-@task 
+@task
 def check(c):
     "Check settings and configurations"
     errors = []
@@ -26,7 +26,7 @@ def check(c):
     except ImportError:
         errors.append("tasks/secrets.py does not exist. It must define GITHUB_ACCESS_TOKEN")
     for f, cols in [
-        ["ROSTER_FILE", ["login", "name", "section"]], 
+        ["ROSTER_FILE", ["login", "name", "section"]],
         ["PROJECT_FILE", ["project_name", "repo"]],
     ]:
         if hasattr(s, f):
@@ -70,14 +70,15 @@ latest_commit_help={
     "message_length": "Display commit message length",
 }
 @task(help=latest_commit_help)
-def latest_commit(c, 
-    project, 
+def latest_commit(c,
+    project,
+    assignment_prefix=None,
     cached=True,
-    section=None, 
-    outfile=None, 
+    section=None,
+    outfile=None,
     order='date',
     repo=False,
-    hash=False, 
+    hash=False,
     stats=False,
     url=False,
     message=False,
@@ -89,10 +90,11 @@ def latest_commit(c,
     roster = pd.read_csv(s.ROSTER_FILE)
     if section:
         roster = roster[roster.section == section]
-    student_repos = get_student_repos(project_repo, roster.login.values, cached=cached)
+    #need to add project name
+    student_repos = get_student_repos(project_repo, roster.login.values, assignment_prefix=assignment_prefix, cached=cached)
     student_users = {login:g.get_user(login) for login in roster.login}
     latest_commits = []
-        
+
     for login in roster.login:
         query_params = {}
         if len(student_repos.get(login, [])) > 0:
