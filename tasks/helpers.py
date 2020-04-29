@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from collections import defaultdict
-from github import Github
+from github import Github, Repository
 from tqdm import tqdm
 import pandas as pd
 from datetime import datetime
@@ -130,3 +130,42 @@ def is_github_classroom_child(parent, child, assignment_prefix):
         return child.name.startswith(assignment_prefix)
     else:
         return child.name.startswith(parent.name)
+
+def create_git_repo_from_template(user, new_owner, new_repo, template_owner, template_repo, private=True):
+    """Creates a new github repository from a template
+    
+    Args:
+        user (AuthenticatedUser): user object
+        new_owner (string): owner of the new repository
+        new_repo (string): name of the new repository
+        template_owner (string): owner of the template repository
+        template_repo (string): name of the template repository
+        private (boolean): if the repo is private (default True)
+
+    Returns:
+        The new repository object
+    """
+    post_parameters = {
+        "owner": new_owner,
+        "name": new_repo,
+        "private": private
+    }
+    headers, data = user._requester.requestJsonAndCheck(
+        "POST",
+         "/repos/" + template_owner + "/" + template_repo + "/generate",
+         headers = {"Accept":"application/vnd.github.baptiste-preview+json"},   #required because templating api in preview
+        input=post_parameters
+    )
+    return Repository.Repository(
+        user._requester, headers, data, completed=True
+    )
+
+def set_repo_permission(repo, user, permission):
+    """Sets the access level on the repo for the user
+    
+    Args:
+        repo (Repository): object for the repository
+        user (string or NamedUser): user to add as a collaborator
+        permission (string): "pull", "push", or "admin"
+    """
+    repo.add_to_collaborators(user, permission)

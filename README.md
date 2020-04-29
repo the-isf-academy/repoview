@@ -41,10 +41,11 @@ Usage is available via `inv --list` and `inv --help [command]`:
 
     Available tasks:
     
-    check           Check settings and configurations
-    clear-cache     Delete the student project repo names cache file, if it exists
-    latest-commit   Show each student's most recent commit
-    roster          Show the roster
+    check                   Check settings and configurations
+    clear-cache             Delete the student project repo names cache file, if it exists
+    latest-commit           Show each student's most recent commit
+    roster                  Show the roster
+    create-from-template    Create a repo from a template
 
     $ inv --help latest-commit
 

@@ -12,6 +12,8 @@ from tasks.helpers import (
     choose_from_options,
     get_project_repo,
     is_github_classroom_child,
+    create_git_repo_from_template,
+    set_repo_permission
 )
 import tasks.settings as s
 
@@ -136,3 +138,36 @@ def clear_cache(c):
     "Delete the student project repo names cache file, if it exists"
     if Path(s.STUDENT_PROJECT_REPO_CACHE).exists():
         Path(s.STUDENT_PROJECT_REPO_CACHE).unlink()
+
+help={
+    "template_repo":"name of template repository",
+    "new_repo":"Name for new repository",
+    "public":"whether the new repo should be public (default private)",
+    "users":"Optional list of users to give access to the repo",
+    "permission":"Permission level to set for users, default admin",}
+@task(help=help, iterable=['users'])
+def create_from_template(c, template_repo_name, new_repo_name, public=False, users=None, permission="admin"):
+    """Create a new repository from a template repository
+    """
+    g=authenticate()
+    user = g.get_user()
+    owner = get_org().login
+    new_repo = create_git_repo_from_template(user, owner, new_repo_name, owner, template_repo_name, not public)
+    if users:
+        for user in users:
+            set_repo_permission(new_repo, user, permission)    
+
+help={
+    "repo_name":"name of repository to set permissions for",
+    "user":"name of user to set permission",
+    "permission":"permission level to set (pull, push, admin)",
+    }
+@task(help=help)
+def repo_permission(c, repo_name, user, permission):
+    """Sets the repository permission level for the given user.
+    """
+    g=authenticate()
+    repo_name = get_org().login + "/" + repo_name
+    repo = g.get_repo(repo_name)
+    set_repo_permission(repo, user, permission)
+
