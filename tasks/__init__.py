@@ -140,8 +140,8 @@ def clear_cache(c):
         Path(s.STUDENT_PROJECT_REPO_CACHE).unlink()
 
 help={
-    "template_repo":"name of template repository",
-    "new_repo":"Name for new repository",
+    "template_repo_name":"name of template repository",
+    "new_repo_name":"Name for new repository",
     "public":"whether the new repo should be public (default private)",
     "users":"Optional list of users to give access to the repo",
     "permission":"Permission level to set for users, default admin",}
