@@ -4,11 +4,17 @@ Scripts for managing student submissions to GitHub Classroom.
 
 ## Installation
 
-Clone this repo. Create a virtual env or use system Python. Install
-dependencies with `pip install -r requirements.txt`.
+Install the necessary libraries and packages.
+
+```python
+poetry shell
+
+poetry install
+```
+
 
 ### Secrets
-Create or update `tasks/settings.py` with your `GITHUB_ORGANIZATION`.
+Create or update `tasks/secret.py` with your `GITHUB_ACCESS_TOKEN`.
 
 Before you can use these scripts, you need a GitHub access token with 
 appropriate permissions. You can create one [here](https://github.com/settings/tokens)
@@ -17,7 +23,36 @@ Update `tasks/secrets.py` with your token. Required permissions:
   - repo (Full control of private repositories)
   - admin:org / read:org (Read org and team membership, read org projects)
 
-### Data files
+
+```python
+GITHUB_ACCESS_TOKEN = "access_token"
+```
+
+### Settings
+
+In `tasks/settings.py` set the `CLONE_DIRECTORY`. This is where it will clone repos and pull repos. 
+
+### Course Data
+
+You will need to create a `roster.csv` file. It should have 2-3 columns. 
+- `col 1` - course
+- `col 2` - github username
+- `col 3` - section
+
+### Using the script
+
+```python
+python repo_management.py log --course mwc --lab lab_database --section 10.2.1
+```
+
+- `first parameter` - mode (log, create, clone, pull, delete)
+- `second parameter` - course (dp, mwc)
+- `third parameter` - lab (template lab name)
+- `fourth parameter` - section (same as `csv`) *optional*
+
+
+
+<!-- ### Data files
 Next, you need to create two data files: `roster.csv` with columns: 
   
   - `login`: Student's GitHub username
@@ -27,9 +62,9 @@ Next, you need to create two data files: `roster.csv` with columns:
 Also create `projects.csv` with columns:
 
   - `project_name`: Your name for the project
-  - `repo`: Full name of the repository (like `username/reponame`)
+  - `repo`: Full name of the repository (like `username/reponame`) -->
 
-### Check your settings
+<!-- ### Check your settings
 
 Once this is complete, `inv check` should run with no errors.
 
@@ -65,10 +100,10 @@ Usage is available via `inv --list` and `inv --help [command]`:
         -r STRING, --order=STRING     Column by which to sort results
         -s STRING, --section=STRING   Filter by section
         -t, --stats                   Display commit stats (addition, deletion line counts)
-        -u, --url                     Display html url for commit
+        -u, --url                     Display html url for commit -->
     
 
-### Caching
+<!-- ### Caching
 Unfortunately, there is not yet an easy way to find students' versions of
 assignments distributed via GitHub Classroom using the API. Instead, we need to
 iterate over all repos in the organization, comparing their names. This is slow,
@@ -82,4 +117,4 @@ an assignment.) If you run into errors, try clearing the cache.
   [Here](http://docs.pyinvoke.org/en/stable/index.html) is the documentation for
   Invoke, the framework we are using. 
 - Keep an eye on [this issue](https://github.com/education/classroom/issues/1679);
-the Classroom API is in active development.
+the Classroom API is in active development. -->

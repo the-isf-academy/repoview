@@ -1,32 +1,21 @@
-[tool.poetry]
+[project]
 name = "repoview"
 version = "0.1.0"
 description = ""
-authors = ["emma <eqbrown@isf.edu.hk>"]
+authors = [
+    {name = "eqbrown_teacher",email = "nobody@makingwithcode.org"}
+]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-certifi = "^2019.11.28"
-chardet = "^3.0.4"
-deprecated = "^1.2.7"
-idna = "^2.8"
-invoke = "^1.4.1"
-numpy = "^1.2.0" 
-pandas = "^1.0.1"
-pygithub = "^1.45"
-pyjwt = "^1.7.1"
-python-dateutil = "^2.8.1"
-pytz = "^2019.3"
-pyyaml = "^5.3"
-requests = "^2.22.0"
-six = "^1.14.0"
-tqdm = "^4.42.1"
-urllib3 = "^1.25.8"
-wrapt = "^1.11.2"
-pyinvoke = "^1.0.4"
+requires-python = ">=3.12"
+dependencies = [
+    "pygithub (>=2.7.0,<3.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)",
+    "pandas (>=2.3.2,<3.0.0)",
+    "tasks (>=2.8.0,<3.0.0)",
+    "argparse (>=1.4.0,<2.0.0)"
+]
 
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -1,8 +1,6 @@
-from github import Github, Repository, GithubException
-import csv
+from github import Github, GithubException
 from datetime import datetime
 import settings as s
-import sys
 import argparse
 import subprocess
 import os
@@ -88,7 +86,7 @@ def get_repo_log(org_name,repo_name, name):
         commits = repo.get_commits()
         commit_count = commits.totalCount-1
 
-        print(f"{s.CYAN}{name[0]} has {commit_count} commits.{s.RESET}")
+        print(f"{s.CYAN}{name} has {commit_count} commits.{s.RESET}")
 
         if commit_count > 0:
             for commit in commits[:commit_count]:
@@ -106,7 +104,7 @@ def get_repo_log(org_name,repo_name, name):
         print(f"Failed to get commit count for '{full_repo_name}': {e}")
         return -1
 
-def clone_repo(org_name,lab_name, repo_name, full_directory):
+def clone_repo(org_name,lab_name, repo_name, full_directory, section=None):
     """
     Clones a GitHub repository to a specified local directory.
 
@@ -121,9 +119,15 @@ def clone_repo(org_name,lab_name, repo_name, full_directory):
         repo = g.get_repo(full_repo_name)
         clone_url = repo.clone_url
 
-        dir_repo = f"{full_directory}/{lab_name}/{repo_name}"
 
-        print(f"Cloning '{repo_name}' into '{dir_repo}'...")
+        if section:
+            dir_repo = f"{full_directory}/{section}/{lab_name}/{repo_name}"
+
+        else:
+            dir_repo = f"{full_directory}/{lab_name}/{repo_name}"
+
+
+        print(f"Cloning '{repo_name}'")
 
         if not os.path.exists(dir_repo):
             print(f"  -Creating directory '{dir_repo}'...")
@@ -141,6 +145,7 @@ def clone_repo(org_name,lab_name, repo_name, full_directory):
 
         print(f"  - Successfully cloned '{full_repo_name}'.")
         # print("Git output:\n", result.stdout)
+        print()
 
     except subprocess.CalledProcessError as e:
         print(f"  - Error during git clone: {e}")
@@ -152,7 +157,7 @@ def clone_repo(org_name,lab_name, repo_name, full_directory):
     except Exception as e:
         print(f"  - An unexpected error occurred: {e}")
 
-def pull_all_repos(lab_name, full_directory):
+def pull_all_repos(lab_name, full_directory, section):
     """
     Iterates through a directory and pulls the latest changes for each Git repository found.
     
@@ -160,7 +165,12 @@ def pull_all_repos(lab_name, full_directory):
         args (argparse.Namespace): The parsed command-line arguments.
     """
 
-    base_dir = f"{full_directory}/{lab_name}"
+    if section:
+        base_dir = f"{full_directory}/{section}/{lab_name}"
+
+    else:
+        base_dir = f"{full_directory}/{lab_name}"
+
 
     if not os.path.isdir(base_dir):
         print(f"Error: Directory '{base_dir}' not found.")
@@ -184,7 +194,7 @@ def pull_all_repos(lab_name, full_directory):
                         capture_output=True,
                         text=True
                     )
-                    print("Git output:\n", result.stdout)
+                    print(result.stdout)
                     if result.stderr:
                         print("Git stderr:\n", result.stderr)
 
@@ -198,68 +208,95 @@ def pull_all_repos(lab_name, full_directory):
         
         if not repo_found:
             print(f"No Git repositories found in '{base_dir}'.")
+
+        print()
     
     except Exception as e:
         print(f"An error occurred while processing the directory: {e}")
     finally:
         os.chdir(original_dir) # Ensure we always change back to the original directory
 
+def get_repos(course, section=None):
+    users = []
+
+    with open("roster.csv", 'r') as file:
+        data = file.read()
+        
+    lines = data.strip().split('\n')
+    
+    for line in lines:
+        parts = line.split(',')
+        
+        if len(parts) >= 2:
+            if parts[0] == course:
+                if section:
+                    if parts[-1] == section: 
+                        users.append(parts[1].strip())  
+
+                else:
+                    users.append(parts[1].strip())   
+    
+    return users
+
 def main():
     """
     Parses command-line arguments and runs the appropriate GitHub API function.
 
-    python repo_management.py -csv year2-1.csv -lab lab_database --log
+    e.g. python repo_management.py log --course mwc --lab lab_database 
     """
-
     
     parser = argparse.ArgumentParser(description="GitHub Repository Management CLI")
     
     # required arguements
-    parser.add_argument("-csv",  help="The csv with student github usernames")
-    parser.add_argument("-lab", help="Lab template name")
+    parser.add_argument("mode", help="Options: log, create, delete, clone, pull")
+    parser.add_argument("--lab", help="Lab template name", required=True)
+    parser.add_argument("--course", help="mwc or dp", required=True)
 
-    # arguement for selecting option
-    
-    parser.add_argument("--create", help="Create a new repository from a template.", action="store_true")
-    parser.add_argument("--log", help="Print the commit log for a repository.", action="store_true")
-    parser.add_argument("--delete", help="Delete repositories", action="store_true")
-    parser.add_argument("--clone", help="Clone repostiories to directory.", action="store_true")
-    parser.add_argument("--pull", help="Clone repostiories to directory.", action="store_true")
-
-    parser.add_argument("--mwc", help="mwc shuyuan", action="store_true")
-    parser.add_argument("--dp", help="dp", action="store_true")
+    # optional arguement 
+    parser.add_argument("--section", help="Lab template name") #optional section
 
     args = parser.parse_args()
 
-    if args.mwc:
+    print()
+
+    if args.course == 'mwc':
         org_name = "the-isf-academy"
         full_directory = f"{s.CLONE_DIRECTORY}/mwc"
-    elif args.dp:
+
+        if args.section:
+            users = get_repos('mwc', args.section)
+        else:
+            users = get_repos('mwc')
+
+    elif args.course == 'dp':
         org_name = "isf-dp-cs"
         full_directory = f"{s.CLONE_DIRECTORY}/dp"
+        users = get_repos('dp')
 
+    if users:
+        for name in users:
+            repo_name = f"{args.lab}_{name}"
 
-    if args.csv:
+            if args.mode == 'log':
+                get_repo_log(org_name, repo_name, name)
 
-        with open(args.csv, "r") as github_names:
-            csvFile = csv.reader(github_names)
+            elif args.mode == 'delete':
+                delete_repo(repo_name)
+        
+            elif args.mode == 'create':
+                create_repos(repo_name, name)
 
-            for name in csvFile:
-                repo_name = f"{args.lab}_{name[0]}"
-
-                if args.log:
-                    get_repo_log(org_name, repo_name, name)
-
-                elif args.delete:
-                    delete_repo(repo_name)
-            
-                elif args.create:
-                    create_repos(repo_name, name)
-
-                elif args.clone:
+            elif args.mode =='clone':
+                if args.section:
+                    clone_repo(org_name, args.lab, repo_name, full_directory, args.section)
+                else:
                     clone_repo(org_name, args.lab, repo_name, full_directory)
 
-    if args.pull:
+
+    if args.mode == 'pull':
+        if args.section:
+            pull_all_repos(args.lab, full_directory, args.section)
+        else:
             pull_all_repos(args.lab, full_directory)
 
 if __name__ == "__main__":
