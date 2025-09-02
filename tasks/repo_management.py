@@ -6,6 +6,11 @@ import sys
 import argparse
 import subprocess
 import os
+import pytz
+from secret import GITHUB_ACCESS_TOKEN
+
+# Define the Hong Kong timezone
+hkt_tz = pytz.timezone('Asia/Hong_Kong')
 
 def get_org(org_name):
     "Looks up the GitHub Organization named in s.GITHUB_ORGANIZATION"
@@ -17,12 +22,12 @@ def get_org(org_name):
 
 
 def authenticate():
-    if s.GITHUB_ACCESS_TOKEN is None:
+    if GITHUB_ACCESS_TOKEN is None:
         raise ValueError("You need a GITHUB ACCESS TOKEN. "
             "Go to https://github.com/settings/tokens, "
             "get one, and add it to tasks/settings.py."
         )
-    return Github(s.GITHUB_ACCESS_TOKEN)
+    return Github(GITHUB_ACCESS_TOKEN)
 
 def create_repos(org_name,template_repo_name, new_repo_name, public=False, users=None, permission="admin"):
     """Create a new repository from a template repository
@@ -73,7 +78,7 @@ def delete_repo(repo):
         print(f"Failed to delete repository '{full_repo_name}': {e}")
         return False
 
-def get_repo_info(org_name,repo_name, name):
+def get_repo_log(org_name,repo_name, name):
     g = authenticate()
     owner_org = get_org(org_name).login
     full_repo_name = f"{owner_org}/{repo_name}"
@@ -83,11 +88,13 @@ def get_repo_info(org_name,repo_name, name):
         commits = repo.get_commits()
         commit_count = commits.totalCount-1
 
-        print(f"{name[0]} has {commit_count} commits.")
+        print(f"{s.CYAN}{name[0]} has {commit_count} commits.{s.RESET}")
 
         if commit_count > 0:
             for commit in commits[:commit_count]:
-                print(f" [{commit.commit.author.date.strftime('%Y-%m-%d')}] {commit.stats.total} lines ({commit.stats.additions} additions, {commit.stats.deletions} deletions)")
+                hkt_date = commit.commit.author.date.astimezone(hkt_tz)
+
+                print(f" [{hkt_date.strftime('%Y-%m-%d %H:%M:%S %Z')}] {commit.stats.total} lines ({commit.stats.additions} additions, {commit.stats.deletions} deletions)")
                 print(f"  - {commit.commit.message}")
                 # print(f"  - Changes: {commit.stats.total} lines ({commit.stats.additions} additions, {commit.stats.deletions} deletions)")
 
@@ -241,7 +248,7 @@ def main():
                 repo_name = f"{args.lab}_{name[0]}"
 
                 if args.log:
-                    get_repo_info(org_name, repo_name, name)
+                    get_repo_log(org_name, repo_name, name)
 
                 elif args.delete:
                     delete_repo(repo_name)
