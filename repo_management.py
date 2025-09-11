@@ -27,12 +27,11 @@ def authenticate():
         )
     return Github(GITHUB_ACCESS_TOKEN)
 
-def create_repos(org_name,template_repo_name, new_repo_name, public=False, users=None, permission="admin"):
+def create_repos(org_name,template_repo_name, new_repo_name,user, public=False,  permission="admin"):
     """Create a new repository from a template repository
     """
     g=authenticate()
     owner = get_org(org_name)
-    print(users)
 
     try:
         # Get the template repository from the organization
@@ -43,18 +42,19 @@ def create_repos(org_name,template_repo_name, new_repo_name, public=False, users
         print(f"Successfully created new repository: {new_repo.full_name}")
         
         # Add collaborators to the new repository
-        if users:
-            print("Adding collaborators...")
-            for user_login in users:
-                try:
-                    user_to_add = g.get_user(user_login)
-                    new_repo.add_to_collaborators(user_to_add, permission=permission)
-                    print(f"  - Added '{user_login}' with '{permission}' permission.")
-                except GithubException as e:
-                    print(f"  - Failed to add user '{user_login}': {e}")
-                    continue
+        # if users:
+        print("Adding collaborators...")
+      
+        try:
+            user_to_add = g.get_user(user)
+            new_repo.add_to_collaborators(user_to_add, permission=permission)
+            print(f"  - Added '{user}' with '{permission}' permission.")
+        except GithubException as e:
+            print(f"  - Failed to add user '{user}': {e}")
         
         return new_repo
+    
+        print()
     
     except GithubException as e:
         print(f"An error occurred during repository creation or collaborator addition: {e}")
@@ -284,7 +284,8 @@ def main():
                 delete_repo(repo_name)
         
             elif args.mode == 'create':
-                create_repos(repo_name, name)
+                create_repos(org_name, args.lab, repo_name, user=name)
+
 
             elif args.mode =='clone':
                 if args.section:
