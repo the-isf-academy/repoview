@@ -1,3 +1,6 @@
+#!/opt/homebrew/bin/python3
+
+
 from github import Github, GithubException
 from datetime import datetime
 import settings as s
@@ -216,10 +219,15 @@ def pull_all_repos(lab_name, full_directory, section):
     finally:
         os.chdir(original_dir) # Ensure we always change back to the original directory
 
-def get_repos(course, section=None):
+def get_repos(course, section=None, csv=None, ):
     users = []
 
-    with open("roster.csv", 'r') as file:
+    if csv == None:
+        file_name = "roster.csv"
+    else:
+        file_name = csv
+
+    with open(file_name, 'r') as file:
         data = file.read()
         
     lines = data.strip().split('\n')
@@ -254,6 +262,8 @@ def main():
 
     # optional arguement 
     parser.add_argument("--section", help="Lab template name") #optional section
+    parser.add_argument("--csv", help="Custom csv") #optional section
+
 
     args = parser.parse_args()
 
@@ -263,7 +273,9 @@ def main():
         org_name = "the-isf-academy"
         full_directory = f"{s.CLONE_DIRECTORY}/mwc"
 
-        if args.section:
+        if args.csv:
+            users = get_repos('mwc', args.section, args.csv)
+        elif args.section:
             users = get_repos('mwc', args.section)
         else:
             users = get_repos('mwc')
@@ -271,11 +283,17 @@ def main():
     elif args.course == 'dp':
         org_name = "isf-dp-cs"
         full_directory = f"{s.CLONE_DIRECTORY}/dp"
-        users = get_repos('dp')
+
+        if args.section:
+            users = get_repos('dp', args.section)
+        else:
+            users = get_repos('dp')
 
     if users:
         for name in users:
             repo_name = f"{args.lab}_{name}"
+            # print(repo_name)
+            # print(org_name)
 
             if args.mode == 'log':
                 get_repo_log(org_name, repo_name, name)
