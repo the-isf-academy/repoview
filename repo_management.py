@@ -1,5 +1,4 @@
-#!/opt/homebrew/bin/python3
-
+#!/usr/bin/env python3
 
 from github import Github, GithubException
 from datetime import datetime
@@ -56,8 +55,7 @@ def create_repos(org_name,template_repo_name, new_repo_name,user, public=False, 
             print(f"  - Failed to add user '{user}': {e}")
         
         return new_repo
-    
-        print()
+
     
     except GithubException as e:
         print(f"An error occurred during repository creation or collaborator addition: {e}")
@@ -219,11 +217,11 @@ def pull_all_repos(lab_name, full_directory, section):
     finally:
         os.chdir(original_dir) # Ensure we always change back to the original directory
 
-def get_repos(course, section=None, csv=None, ):
+def get_repos(course, section=None, csv=None):
     users = []
 
     if csv == None:
-        file_name = "roster.csv"
+        raise FileNotFoundError("CSV not found")
     else:
         file_name = csv
 
@@ -285,9 +283,9 @@ def main():
         full_directory = f"{s.CLONE_DIRECTORY}/dp"
 
         if args.section:
-            users = get_repos('dp', args.section)
+            users = get_repos('dp', args.section, csv=args.csv)
         else:
-            users = get_repos('dp')
+            users = get_repos('dp', csv=args.csv)
 
     if users:
         for name in users:
