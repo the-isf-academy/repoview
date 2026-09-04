@@ -272,9 +272,9 @@ def main():
         full_directory = f"{s.CLONE_DIRECTORY}/mwc"
 
         if args.csv:
-            users = get_repos('mwc', args.section, args.csv)
+            users = get_repos('mwc', args.section.lower(), args.csv)
         elif args.section:
-            users = get_repos('mwc', args.section)
+            users = get_repos('mwc', args.section.lower())
         else:
             users = get_repos('mwc')
 
